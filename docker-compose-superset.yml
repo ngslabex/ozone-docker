@@ -48,7 +48,7 @@ services:
     
     
   superset-init:
-#    command: "/etc/superset/superset-init.sh"
+    command: "/etc/superset/superset-init.sh"
     depends_on:
       - postgresql
       - redis
