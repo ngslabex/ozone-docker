@@ -16,7 +16,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
       - ANALYTICS_DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-    image: &superset-image amancevice/superset:1.5.1
+    image: amancevice/superset:1.5.1
     labels:
       traefik.enable: "true"
       traefik.http.routers.superset.rule: "Host(`${SUPERSET_HOSTNAME}`)"
@@ -41,7 +41,7 @@ services:
       superset-init:
         condition: service_completed_successfully
     environment: *superset-env
-    image: *superset-image
+    image: amancevice/superset:1.5.1
     networks:
       - ozone
     restart: unless-stopped
@@ -53,7 +53,7 @@ services:
       - postgresql
       - redis
     environment: *superset-env
-    image: *superset-image
+    image: amancevice/superset:1.5.1
     networks:
       - ozone
     restart: on-failure
