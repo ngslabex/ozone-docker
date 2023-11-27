@@ -1,9 +1,6 @@
 services:
 
- # Superset
   superset:
-    image: amancevice/superset:1.5.1
-    restart: unless-stopped
     depends_on:
       redis:
         condition: service_started
@@ -11,9 +8,7 @@ services:
         condition: service_started
       superset-init:
         condition: service_completed_successfully
-    ports:
-      - "8088:8088"
-    environment:
+    environment: &superset-env
       - DATABASE_HOST=${POSTGRES_DB_HOST}
       - DATABASE_DB=${SUPERSET_DB}
       - DATABASE_USER=${SUPERSET_DB_USER}
@@ -21,21 +16,23 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
       - ANALYTICS_DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-    volumes:
-      - ./superset:/etc/superset
-    networks:
-      ozone:
-        aliases:
-          - superset
-      web:
+    image: &superset-image amancevice/superset:1.5.1
     labels:
       traefik.enable: "true"
       traefik.http.routers.superset.rule: "Host(`${SUPERSET_HOSTNAME}`)"
       traefik.http.routers.superset.entrypoints: "websecure"
       traefik.http.services.superset.loadbalancer.server.port: 8088
-  superset-worker:
-    image: amancevice/superset:1.5.1
+    networks:
+      - ozone
+      - web
+    ports:
+      - "8088:8088"
     restart: unless-stopped
+    volumes:
+      - ${SUPERSET_CONFIG_PATH}/:/etc/superset/
+    
+  superset-worker:
+    command: "celery worker --app=superset.tasks.celery_app:app"
     depends_on:
       redis:
         condition: service_started
@@ -43,43 +40,25 @@ services:
         condition: service_started
       superset-init:
         condition: service_completed_successfully
-    volumes:
-      - ./superset:/etc/superset
-    environment:
-      - DATABASE_HOST=${POSTGRES_DB_HOST}
-      - DATABASE_DB=${SUPERSET_DB}
-      - DATABASE_USER=${SUPERSET_DB_USER}
-      - DATABASE_PASSWORD=${SUPERSET_DB_PASSWORD}
-      - SECRET_KEY=${SECRET_KEY}
-      - ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
-      - ANALYTICS_DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-    command: "celery worker --app=superset.tasks.celery_app:app"
+    environment: *superset-env
+    image: *superset-image
     networks:
-      ozone:
-        aliases:
-          - superset-worker
+      - ozone
+    restart: unless-stopped
+    
+    
   superset-init:
-    image: amancevice/superset:1.5.1
-    restart: on-failure
+    command: "/etc/superset/superset-init.sh"
     depends_on:
       - postgresql
       - redis
-    volumes:
-      - ./superset:/etc/superset
-    environment:
-      - DATABASE_HOST=${POSTGRES_DB_HOST}
-      - DATABASE_DB=${SUPERSET_DB}
-      - DATABASE_USER=${SUPERSET_DB_USER}
-      - DATABASE_PASSWORD=${SUPERSET_DB_PASSWORD}
-      - SECRET_KEY=${SECRET_KEY}
-      - ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
-      - ANALYTICS_DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-    command: "/etc/superset/superset-init.sh"
+    environment: *superset-env
+    image: *superset-image
     networks:
-      ozone:
-        aliases:
-          - superset-init
-
+      - ozone
+    restart: on-failure
+    volumes:
+      - ${SUPERSET_CONFIG_PATH}/:/etc/superset/
     
   redis:
     image: redis:7
