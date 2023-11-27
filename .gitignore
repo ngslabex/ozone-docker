@@ -8,20 +8,11 @@ senaite/senaite-data/*
 __pycache__
 # Ignore the docker-compose.override.yml file
 docker-compose.override.*
-*.env
-!.env
-*.jar
-
-# Ignore the docker-compose.override.yml file
-docker-compose.override.*
 
 build
 
 # Maven target directory
 target/
 
-
-# Ignore start-demo.sh folders and downloaded resources
-ozone/
-ozone-distro-demo
-*.ozone-distro-demo.zip
+# IDE
+.vscode

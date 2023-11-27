@@ -2,19 +2,23 @@
 
 Welcome to the Ozone FOSS manual setup guide. This guide details the setup of Ozone FOSS step by step.
 
-- [Prerequisites](#prerequisites)
-- [Manual Setup Steps](#manual-setup-steps)
-  * [Step 1. Create your working directory](#step-1-create-your-working-directory)
-  * [Step 2. Clone the ozone-docker project](#step-2-clone-the-ozone-docker-project)
-  * [Step 3. Create the public Docker network](#step-3-create-the-public-docker-network)
-  * [Step 4. Destroy the running instance containers](#step-4-destroy-the-running-instance-containers)
-  * [Step 5. Download and extract the distribution](#step-5-download-and-extract-the-distribution)
-  * [Step 6. Export all needed environment variables](#step-6-export-all-needed-environment-variables)
-  * [Step 7. Set up Traefik](#step-7-set-up-traefik)
-  * [Step 8. Start Ozone](#step-8-start-ozone)
-  * [Step 9. Browse Ozone](#step-9-browse-ozone)
+- [Ozone FOSS Manual setup](#ozone-foss-manual-setup)
+  * [Prerequisites](#prerequisites)
+  * [Manual Setup Steps](#manual-setup-steps)
+    + [Step 1. Clone the ozone-docker project](#step-1-clone-the-ozone-docker-project)
+    + [Step 2. (Optional) Destroy any running containers from previous trials](#step-2--optional--destroy-any-running-containers-from-previous-trials)
+    + [Step 3. Download the Ozone distribution](#step-3-download-the-ozone-distribution)
+    + [Step 4. Export needed environment variables](#step-4-export-needed-environment-variables)
+    + [Step 5. (Optional) Activate Ozone demo data generation](#step-5--optional--activate-ozone-demo-data-generation)
+    + [Step 6. Create the public Docker network](#step-6-create-the-public-docker-network)
+    + [Step 7. (Optional) Set up Traefik](#step-7--optional--set-up-traefik)
+    + [Step 8. Start Ozone](#step-8-start-ozone)
+    + [Step 9. Browse Ozone](#step-9-browse-ozone)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>(Table of contents generated with markdown-toc)</a></i></small>
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
+
 
 ## Prerequisites
 * Install Git, Maven and Docker Compose
@@ -23,75 +27,54 @@ Welcome to the Ozone FOSS manual setup guide. This guide details the setup of Oz
 
 
 ## Manual Setup Steps
-### Step 1. Create your working directory
-
-Move to the location of your choice, e.g., your home folder:
-
-```bash
-cd ~/
-```
-
-Then create the Ozone working directory and save the path:
-```bash
-export OZONE_DIR=$PWD/ozone && \
-mkdir -p $OZONE_DIR && cd $OZONE_DIR
-```
-### Step 2. Clone the ozone-docker project
-
+### Step 1. Clone the ozone-docker project
 ```bash
 git clone https://github.com/ozone-his/ozone-docker
 ```
 
 ```bash
 cd ozone-docker
+cd scripts/
 ```
 
-### Step 3. Create the public Docker network
-```bash
-docker network create web
-```
-
-### Step 4. Destroy the running instance containers
+### Step 2. (Optional) Destroy any running containers from previous trials
 If you have already set up Ozone before you may need to clean up your local environment first:
 
 ```bash
 ./destroy-demo.sh
 ```
 
-### Step 5. Download and extract the distribution
+### Step 3. Set up and download the Ozone distribution
 
+Create a directory to download Ozone distro:
 ```bash
-export VERSION=1.0.0-alpha.7&& \
-./mvnw org.apache.maven.plugins:maven-dependency-plugin:3.2.0:get -DremoteRepositories=https://nexus.mekomsolutions.net/repository/maven-public -Dartifact=com.ozonehis:ozone-distro:$VERSION:zip -Dtransitive=false --legacy-local-repository && \
-./mvnw org.apache.maven.plugins:maven-dependency-plugin:3.2.0:unpack -Dproject.basedir=$OZONE_DIR -Dartifact=com.ozonehis:ozone-distro:$VERSION:zip -DoutputDirectory=$OZONE_DIR/ozone-distro-$VERSION
+export OZONE_DIR=$PWD/ozone && \
+mkdir -p $OZONE_DIR
 ```
 
-### Step 6. Export all needed environment variables
+Set the Ozone distro version to use:
+```bash
+export OZONE_DISTRO_VERSION=1.0.0-SNAPSHOT
+```
+
+Download and extract Ozone distro:
+```bash
+export DISTRO_PATH=$OZONE_DIR/ozone-distro
+
+rm -rf $OZONE_DIR/target/dependency-maven-plugin-markers/
+./mvnw org.apache.maven.plugins:maven-dependency-plugin:3.2.0:get -DremoteRepositories=https://nexus.mekomsolutions.net/repository/maven-public -Dartifact=com.ozonehis:ozone-distro:$OZONE_DISTRO_VERSION:zip -Dtransitive=false --legacy-local-repository && \
+./mvnw org.apache.maven.plugins:maven-dependency-plugin:3.2.0:unpack -Dproject.basedir=$OZONE_DIR -Dartifact=com.ozonehis:ozone-distro:$OZONE_DISTRO_VERSION:zip -DoutputDirectory=$DISTRO_PATH
+```
+
+### Step 4. Export needed environment variables
 
 The Ozone Docker project relies on a number of environment variables (env vars) to document where the distro assets are expected to be found.
-For the sample demo you can export the following env vars:
+For the sample demo those vars are provided in the [export-demo-env.sh](../scripts/export-demo-env.sh) file.
 ```bash
-export DISTRO_GROUP=ozone-demo; \
-
-export DISTRO_PATH=$OZONE_DIR/ozone-distro-$VERSION;  \
-
-export OPENMRS_CONFIG_PATH=$DISTRO_PATH/openmrs_config;  \
-export OZONE_CONFIG_PATH=$DISTRO_PATH/ozone_config;  \
-export OPENMRS_CORE_PATH=$DISTRO_PATH/openmrs_core;  \
-export OPENMRS_MODULES_PATH=$DISTRO_PATH/openmrs_modules;  \
-export EIP_PATH=$DISTRO_PATH/eip_config; \
-export SPA_PATH=$DISTRO_PATH/spa;  \
-export SENAITE_CONFIG_PATH=$DISTRO_PATH/senaite_config; \
-export SUPERSET_CONFIG_PATH=$DISTRO_PATH/superset_config;  \
-
-export ODOO_EXTRA_ADDONS=$DISTRO_PATH/odoo_config/addons;  \
-export ODOO_CONFIG_PATH=$DISTRO_PATH/odoo_config/odoo_csv;  \
-export ODOO_INITIALIZER_CONFIG_FILE_PATH=$DISTRO_PATH/odoo_config/config/initializer_config.json;  \
-export ODOO_CONFIG_FILE_PATH=$DISTRO_PATH/odoo_config/config/odoo.conf;  \
-export O3_FRONTEND_TAG=3.0.0-beta.13;  \
-export O3_BACKEND_TAG=3.0.0-beta.13;
+source export-demo-env.sh
 ```
-#### How to activate Ozone demo data generation
+
+### Step 5. (Optional) Activate Ozone demo data generation
 
 The generation of demo data is handled by a separate service that can be opted in or out. This service is configured with an EIP route that takes care of generating demo data 10 minutes after Ozone has started.
 
@@ -101,14 +84,13 @@ To set the number of demo patients to be generated:
 ```bash
 export NUMBER_OF_DEMO_PATIENTS=50
 ```
-#### For developers: Override of `DISTRO_PATH`
 
-If you are doing development on Ozone and are building the Ozone distro in your local environment, then you would need to override `DISTRO_PATH` to point to your distro build folder. For example if your working folder is `/your/path/to/ozone-distro` for the distro then you would want to do something like this:
+### Step 6. Create the public Docker network
 ```bash
-export DISTRO_PATH=/your/path/to/ozone-distro/target/ozone-distro-$VERSION
+docker network create web
 ```
 
-### Step 7. Set up Traefik
+### Step 7. (Optional) Set up Traefik
 
 This step is optional but recommended since Traefik brings many benefits as a reverse proxy for your Ozone project. 
 
@@ -148,15 +130,16 @@ export SUPERSET_HOSTNAME=analytics-"${IP}.traefik.me";
 ```
 
 ### Step 8. Start Ozone
+
 #### With Apache 2
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose-proxy.yml -f docker-compose-senaite.yml -f docker-compose-odoo.yml -f docker-compose-demo.yml -p $DISTRO_GROUP up
+docker compose -p ozone -f ../docker-compose-common.yml -f ../docker-compose-openmrs.yml -f ../docker-compose-senaite.yml -f ../docker-compose-odoo.yml -f ../docker-compose-superset.yml -f ../demo/docker-compose.yml -f ../proxy/docker-compose.yml up -d --build
 ```
 #### With Traefik
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose-senaite.yml -f docker-compose-odoo.yml -f docker-compose-demo.yml -p $DISTRO_GROUP up
+docker compose -p ozone -f ../docker-compose-common.yml -f ../docker-compose-openmrs.yml -f ../docker-compose-senaite.yml -f ../docker-compose-odoo.yml -f ../docker-compose-superset.yml -f ../demo/docker-compose.yml up -d
 ```
 
 ### Step 9. Browse Ozone
@@ -172,3 +155,15 @@ Ozone FOSS requires you to log into each component separately:
 
 ⚠️ If you started the project with Traefik on macOS the coordinates for the components will be different and you will have to replace "`172-17-0-1`" with your host IP.
 E.g. if your host IP is 192.168.200.197, https://emr-172-17-0-1.traefik.me will have to become https://emr-192-168-200-197.traefik.me, etc.
+
+### Step 10. (Optional) Stop Ozone
+
+To simply stop:
+```bash
+docker compose -p ozone -f ../docker-compose-common.yml -f ../docker-compose-openmrs.yml -f ../docker-compose-senaite.yml -f ../docker-compose-odoo.yml -f ../docker-compose-superset.yml -f ../demo/docker-compose.yml -f ../proxy/docker-compose.yml stop
+```
+
+To completely remove the containers and volumes:
+```bash
+docker compose -p ozone -f ../docker-compose-common.yml -f ../docker-compose-openmrs.yml -f ../docker-compose-senaite.yml -f ../docker-compose-odoo.yml -f ../docker-compose-superset.yml -f ../demo/docker-compose.yml -f ../proxy/docker-compose.yml down -v
+```
