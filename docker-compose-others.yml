@@ -1,0 +1,35 @@
+services:
+  # Portainer
+  s_portainer:
+    container_name: c_portainer
+    image: portainer/portainer-ce
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./portainer:/data
+  ###
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 82:80
+    environment:
+      - PMA_ARBITRARY=1
+    networks:
+      - ozone
+  ###
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 84:8080
+    networks:
+      - ozone
+
+version: "3.9"
+volumes:
+  portainer: ~
+networks:
+  ozone:
