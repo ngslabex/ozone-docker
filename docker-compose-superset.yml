@@ -17,7 +17,7 @@ services:
       - ADMIN_USERNAME=${SUPERSET_ADMIN_USERNAME}
       - ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
       - ANALYTICS_DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-    image: &superset-image amancevice/superset:2.1.0
+    image: &superset-image amancevice/superset:latest
     labels:
       traefik.enable: "true"
       traefik.http.routers.superset.rule: "Host(`${SUPERSET_HOSTNAME}`)"
