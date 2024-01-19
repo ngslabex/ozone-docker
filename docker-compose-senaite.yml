@@ -11,7 +11,7 @@ services:
       - ADMIN_PASSWORD=${SENAITE_ADMIN_PASSWORD}
       - PASSWORD=${SENAITE_ADMIN_PASSWORD}
 
-    image: ersankose/senaite:2.5.0
+    image: ersankose/senaite:latest
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.senaite.loadbalancer.server.port=8080"
