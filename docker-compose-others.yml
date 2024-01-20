@@ -27,6 +27,16 @@ services:
       - 84:8080
     networks:
       - ozone
+  ###
+  traefik:
+    image: traefik:alpine
+    ports:
+      - 86:80
+      - 88:443
+      - 90:8080
+    volumes:
+      - $PWD/traefik/config:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock
 
 version: "3.9"
 volumes:
